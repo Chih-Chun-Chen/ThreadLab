@@ -1,38 +1,79 @@
-#include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
 
-#define NUM_THREADS 4 // Change this to the desired number of threads
+#define NUM_THREADS 4
+#define ITERATIONS 100
 
-void *producer(void *threadid) {
-    long tid;
-    tid = (long)threadid;
-    printf("I am a producer, TID: %ld\n", tid);
+int A = 0;
+int B = 0;
+sem_t mutexA, mutexB;
+
+void* producer(void* arg) {
+    int tid = *((int*)arg);
+    for (int i = 0; i < ITERATIONS; ++i) {
+        sem_wait(&mutexA); // Lock mutexA to protect A
+        A += 1; // Critical section for A
+        sem_post(&mutexA); // Release mutexA
+        usleep(rand() % 101); // Introduce random sleep
+
+        sem_wait(&mutexB); // Lock mutexB to protect B
+        B += 3; // Critical section for B
+        sem_post(&mutexB); // Release mutexB
+        usleep(rand() % 101); // Introduce random sleep
+
+        printf("Thread %d - Producer\n", tid); // Print thread ID
+
+    }
     pthread_exit(NULL);
 }
 
-void *consumer(void *threadid) {
-    long tid;
-    tid = (long)threadid;
-    printf("I am a consumer, TID: %ld\n", tid);
+void* consumer(void* arg) {
+    int tid = *((int*)arg);
+    for (int i = 0; i < ITERATIONS; ++i) {
+        sem_wait(&mutexB); // Lock mutexB to protect B
+        B += 3; // Critical section for B
+        sem_post(&mutexB); // Release mutexB
+        usleep(rand() % 101); // Introduce random sleep
+
+        sem_wait(&mutexA); // Lock mutexA to protect A
+        A += 1; // Critical section for A
+        sem_post(&mutexA); // Release mutexA
+        usleep(rand() % 101); // Introduce random sleep
+
+        printf("Thread %d - Consumer\n", tid); // Print thread ID
+    }
     pthread_exit(NULL);
 }
 
 int main() {
     pthread_t threads[NUM_THREADS];
-    int rc;
-    long t;
+    int thread_ids[NUM_THREADS];
+    sem_init(&mutexA, 0, 1);
+    sem_init(&mutexB, 0, 1);
 
-    for (t = 0; t < NUM_THREADS; t++) {
-        if (t % 2 == 0) {
-            rc = pthread_create(&threads[t], NULL, producer, (void *)t);
+    for (int i = 0; i < NUM_THREADS; i++) {
+        thread_ids[i] = i;
+        if (i % 2 == 0) {
+            pthread_create(&threads[i], NULL, producer, &thread_ids[i]);
         } else {
-            rc = pthread_create(&threads[t], NULL, consumer, (void *)t);
-        }
-        if (rc) {
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            return -1;
+            pthread_create(&threads[i], NULL, consumer, &thread_ids[i]);
         }
     }
 
-    pthread_exit(NULL);
+    /*
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    */
+
+    printf("Final value of A: %d\n", A);
+    printf("Final value of B: %d\n", B);
+
+    sem_destroy(&mutexA);
+    sem_destroy(&mutexB);
+
+    return 0;
 }
