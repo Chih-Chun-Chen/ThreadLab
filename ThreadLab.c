@@ -22,10 +22,8 @@ void* producer(void* arg) {
         B += 3; // Critical section for B
         sem_post(&mutexB); // Release mutexB
         usleep(rand() % 101); // Introduce random sleep
-
-        printf("Thread %d - Producer\n", tid); // Print thread ID
-
     }
+    printf("Thread %d - Producer\n", tid); // Print thread ID
     pthread_exit(NULL);
 }
 
@@ -41,9 +39,8 @@ void* consumer(void* arg) {
         A += 1; // Critical section for A
         sem_post(&mutexA); // Release mutexA
         usleep(rand() % 101); // Introduce random sleep
-
-        printf("Thread %d - Consumer\n", tid); // Print thread ID
     }
+    printf("Thread %d - Consumer\n", tid); // Print thread ID
     pthread_exit(NULL);
 }
 
@@ -68,7 +65,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    
+    printf("Launching %d threads\n", NUM_THREADS);
     for (int i = 0; i < NUM_THREADS; i++) {
         pthread_join(threads[i], NULL);
     }
