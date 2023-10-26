@@ -4,7 +4,6 @@
 #include <semaphore.h>
 #include <unistd.h>
 
-#define NUM_THREADS 4
 #define ITERATIONS 100
 
 int A = 0;
@@ -48,7 +47,13 @@ void* consumer(void* arg) {
     pthread_exit(NULL);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s <NUM_THREADS>\n", argv[0]);
+        return 1;
+    }
+
+    int NUM_THREADS = atoi(argv[1]);
     pthread_t threads[NUM_THREADS];
     int thread_ids[NUM_THREADS];
     sem_init(&mutexA, 0, 1);
@@ -63,11 +68,11 @@ int main() {
         }
     }
 
-    /*
+    
     for (int i = 0; i < NUM_THREADS; i++) {
         pthread_join(threads[i], NULL);
     }
-    */
+    
 
     printf("Final value of A: %d\n", A);
     printf("Final value of B: %d\n", B);
