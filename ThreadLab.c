@@ -4,7 +4,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 
-#define ITERATIONS 20
+#define ITERATIONS 100
 #define BUFFER_SIZE 3
 
 int A = 0, B = 0;
@@ -14,7 +14,6 @@ sem_t s, n, e; // s -> read and write  n -> consumer  e -> producer
 
 void* producer(void* arg) {
     int tid = *((int*)arg);
-    printf("Thread %d - Producer\n", tid); // Print thread ID
     for (int i = 0; i < ITERATIONS; ++i) {
         sem_wait(&mutexA); // Lock mutexA to protect A
         A += 1; // Critical section for A
@@ -26,18 +25,20 @@ void* producer(void* arg) {
         sem_post(&mutexB); // Release mutexB
         usleep(rand() % 101); // Introduce random sleep
 
+        /*
         int item = rand() % 100;
         printf("Producer %d produced %d\n", tid, item);
         semWait(e);
         semWait(s);
+        */
 
     }
+    printf("Thread %d - Producer\n", tid); // Print thread ID
     pthread_exit(NULL);
 }
 
 void* consumer(void* arg) {
     int tid = *((int*)arg);
-    printf("Thread %d - Consumer\n", tid); // Print thread ID
     for (int i = 0; i < ITERATIONS; ++i) {
         sem_wait(&mutexB); // Lock mutexB to protect B
         B += 3; // Critical section for B
@@ -49,6 +50,7 @@ void* consumer(void* arg) {
         sem_post(&mutexA); // Release mutexA
         usleep(rand() % 101); // Introduce random sleep
     }
+    printf("Thread %d - Consumer\n", tid); // Print thread ID
     pthread_exit(NULL);
 }
 
